@@ -13,19 +13,38 @@ st.set_page_config(
 )
 
 # Add a title and description
-st.title("📊 Excel Data Visualizer")
+st.title("📊 Data Visualizer")
 st.markdown("""
-Upload your Excel file and create interactive visualizations instantly!
+Upload your Excel or CSV file and create interactive visualizations instantly!
 This app supports various chart types and data analysis features.
 """)
 
 # File uploader
-uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'])
+uploaded_file = st.file_uploader("Choose an Excel or CSV file", type=['xlsx', 'xls', 'csv'])
 
 if uploaded_file is not None:
     # Load the data
     try:
-        df = pd.read_excel(uploaded_file)
+        # Check file type and load accordingly
+        file_type = uploaded_file.name.split('.')[-1]
+        
+        if file_type.lower() in ['xlsx', 'xls']:
+            df = pd.read_excel(uploaded_file)
+        elif file_type.lower() == 'csv':
+            # Add options for CSV parsing
+            csv_options = st.expander("CSV Import Options")
+            with csv_options:
+                separator = st.selectbox("Separator", [",", ";", "\t", "|", " "], index=0)
+                encoding = st.selectbox("Encoding", ["utf-8", "latin-1", "iso-8859-1", "cp1252"], index=0)
+                decimal = st.selectbox("Decimal Symbol", [".", ","], index=0)
+                thousands = st.selectbox("Thousands Separator", ["", ",", ".", " "], index=0)
+                
+            # Parse CSV with selected options
+            df = pd.read_csv(uploaded_file, 
+                             sep=separator, 
+                             encoding=encoding,
+                             decimal=decimal,
+                             thousands=thousands if thousands else None)
         
         # Display basic info about the dataset
         st.success(f"Successfully loaded data with {df.shape[0]} rows and {df.shape[1]} columns.")
@@ -587,7 +606,7 @@ if uploaded_file is not None:
         st.warning("Please check if the Excel file is valid and not corrupted.")
 else:
     # Sample data section when no file is uploaded
-    st.info("👆 Upload an Excel file to get started or use the sample data below.")
+    st.info("👆 Upload an Excel or CSV file to get started or use the sample data below.")
     
     if st.button("Load Sample Data"):
         # Create sample data
@@ -632,7 +651,7 @@ import plotly.graph_objects as go
 st.markdown("---")
 st.markdown("""
 ### How to use this app:
-1. Upload your Excel file using the file uploader at the top
+1. Upload your Excel or CSV file using the file uploader at the top
 2. Navigate through the tabs to explore your data and create visualizations
 3. Customize the visualizations using the controls on the left side
 4. Download results as needed
